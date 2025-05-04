@@ -44,7 +44,7 @@ A lightweight, thread-based anti-cheat system written in C++ designed to protect
 ## 📦 Usage
 
 1. Compile the DLL using a Visual Studio C++ project.
-2. Inject `AntiCheatV4_DLL.dll` into your IL2CPP-based Unity game.
+2. Inject `ExampleLatest.dll` into your IL2CPP-based Unity game.
 3. Call `StartAntiCheatMonitoring()` when the game initializes.
 4. To gracefully stop the anti-cheat, call `StopAntiCheatMonitoring()` before shutdown.
 
