@@ -9,18 +9,31 @@
 #include <unordered_map>
 #include <Windows.h>
 #include <mutex>
+#include <filesystem>
+#include <shlobj.h>
 
 #pragma comment(lib, "psapi.lib")
-
 std::atomic<bool> g_Running(true);
 std::thread g_MonitorThread;
 std::mutex cacheMutex;
+std::ofstream logFile;
+
+// Initialize log file in %LOCALAPPDATA%\BlackoutAC\logs
+void InitLogFile() {
+    char localAppData[MAX_PATH];
+    if (SUCCEEDED(SHGetFolderPathA(NULL, CSIDL_LOCAL_APPDATA, NULL, 0, localAppData))) {
+        std::string logDir = std::string(localAppData) + "\\BlackoutAC\\logs";
+        std::filesystem::create_directories(logDir);
+        std::string logPath = logDir + "\\blackoutac_log.txt";
+
+        logFile.open(logPath, std::ios::app);
+    }
+}
 
 void LogMessage(const std::string& message) {
-    std::ofstream logFile("anticheat_log.txt", std::ios::app);
+    if (!logFile.is_open()) InitLogFile();
     if (logFile.is_open()) {
-        logFile << "[" << std::time(0) << "] " << message << std::endl;
-        logFile.close();
+        logFile << "[" << std::time(nullptr) << "] " << message << std::endl;
     }
 }
 
@@ -49,7 +62,7 @@ bool IsBeingDebugged() {
 void AntiDebugTrap() {
     if (IsBeingDebugged()) {
         LogMessage("Debugger Detected. Closing process.");
-        MessageBox(NULL, L"Debugger Detected. Closing...", L"AntiCheat", MB_ICONERROR | MB_OK);
+        MessageBoxA(NULL, "Debugger Detected. Closing...", "AntiCheat", MB_ICONERROR | MB_OK);
         ExitProcess(0xDEAD);
     }
 }
@@ -65,7 +78,7 @@ void HideThread() {
 
 HANDLE OpenProcessWithCheck(DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwProcessId) {
     HANDLE hProcess = OpenProcess(dwDesiredAccess, bInheritHandle, dwProcessId);
-    if (hProcess == NULL) {
+    if (!hProcess) {
         LogMessage("Failed to open process with PID: " + std::to_string(dwProcessId));
     }
     return hProcess;
@@ -73,7 +86,7 @@ HANDLE OpenProcessWithCheck(DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dw
 
 void TerminateExternalProcess(DWORD pid) {
     HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
-    if (hProcess != NULL) {
+    if (hProcess) {
         TerminateProcess(hProcess, 0);
         CloseHandle(hProcess);
         LogMessage("External Process Terminated: " + std::to_string(pid));
@@ -85,9 +98,7 @@ bool DetectExternalHandles() {
     HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
     if (hSnap == INVALID_HANDLE_VALUE) return false;
 
-    PROCESSENTRY32 pe;
-    pe.dwSize = sizeof(pe);
-
+    PROCESSENTRY32 pe = { sizeof(pe) };
     bool externalHandleDetected = false;
 
     if (Process32First(hSnap, &pe)) {
@@ -96,18 +107,17 @@ bool DetectExternalHandles() {
 
             HANDLE hProc = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_DUP_HANDLE, FALSE, pe.th32ProcessID);
             if (hProc) {
-                HANDLE hDup = NULL;
                 if (DuplicateHandle(hProc, GetCurrentProcess(), NULL, NULL, 0, FALSE, DUPLICATE_SAME_ACCESS)) {
                     externalHandleDetected = true;
-                    LogMessage("External Process Detected: Terminating process ID: " + std::to_string(pe.th32ProcessID));
+                    LogMessage("External Handle Detected. Terminating PID: " + std::to_string(pe.th32ProcessID));
                     TerminateExternalProcess(pe.th32ProcessID);
                 }
                 CloseHandle(hProc);
             }
         } while (Process32Next(hSnap, &pe));
     }
-    CloseHandle(hSnap);
 
+    CloseHandle(hSnap);
     return externalHandleDetected;
 }
 
@@ -116,9 +126,7 @@ bool DetectRemoteThreads() {
     HANDLE hThreadSnap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
     if (hThreadSnap == INVALID_HANDLE_VALUE) return false;
 
-    THREADENTRY32 te;
-    te.dwSize = sizeof(THREADENTRY32);
-
+    THREADENTRY32 te = { sizeof(te) };
     bool remoteThreadDetected = false;
 
     if (Thread32First(hThreadSnap, &te)) {
@@ -129,27 +137,25 @@ bool DetectRemoteThreads() {
             if (hThread) {
                 remoteThreadDetected = true;
                 CloseHandle(hThread);
-                LogMessage("Remote Thread Detected from another process.");
+                LogMessage("Remote Thread Detected in current process.");
             }
         } while (Thread32Next(hThreadSnap, &te));
     }
-    CloseHandle(hThreadSnap);
 
+    CloseHandle(hThreadSnap);
     return remoteThreadDetected;
 }
 
 void DetectManualMappedModules() {
-    HANDLE hProcess = GetCurrentProcess();
     HMODULE hMods[1024];
     DWORD cbNeeded;
-
-    if (EnumProcessModules(hProcess, hMods, sizeof(hMods), &cbNeeded)) {
-        for (unsigned int i = 0; i < (cbNeeded / sizeof(HMODULE)); i++) {
-            TCHAR szModName[MAX_PATH];
-            if (GetModuleFileNameEx(hProcess, hMods[i], szModName, sizeof(szModName) / sizeof(TCHAR))) {
-                if (wcslen(szModName) == 0) {
-                    LogMessage("Manual Map Detected, closing...");
-                    MessageBox(NULL, L"Manual Map Detected! Closing...", L"AntiCheat", MB_ICONERROR | MB_OK);
+    if (EnumProcessModules(GetCurrentProcess(), hMods, sizeof(hMods), &cbNeeded)) {
+        for (size_t i = 0; i < cbNeeded / sizeof(HMODULE); ++i) {
+            TCHAR modName[MAX_PATH];
+            if (GetModuleFileNameEx(GetCurrentProcess(), hMods[i], modName, MAX_PATH)) {
+                if (wcslen(modName) == 0) {
+                    LogMessage("Manual Map Detected. Exiting.");
+                    MessageBoxA(NULL, "Manual Map Detected! Closing...", "AntiCheat", MB_ICONERROR | MB_OK);
                     ExitProcess(0xBAAD);
                 }
             }
@@ -160,23 +166,20 @@ void DetectManualMappedModules() {
 bool DetectSuspiciousMemoryRegions() {
     MEMORY_BASIC_INFORMATION mbi;
     BYTE* addr = 0;
-    bool suspiciousFound = false;
+    bool found = false;
 
     while (VirtualQuery(addr, &mbi, sizeof(mbi)) == sizeof(mbi)) {
-        if ((mbi.State == MEM_COMMIT) &&
-            (mbi.Type == MEM_PRIVATE) &&
-            !(mbi.Protect & PAGE_GUARD) &&
-            !(mbi.Protect & PAGE_NOACCESS)) {
-            char* region = static_cast<char*>(mbi.BaseAddress);
-            if (mbi.AllocationProtect == PAGE_EXECUTE_READWRITE || mbi.Protect == PAGE_EXECUTE_READWRITE) {
-                LogMessage("Suspicious RWX memory region detected at: " + std::to_string((uintptr_t)region));
-                suspiciousFound = true;
-            }
+        if (mbi.State == MEM_COMMIT && mbi.Type == MEM_PRIVATE &&
+            !(mbi.Protect & PAGE_GUARD) && !(mbi.Protect & PAGE_NOACCESS) &&
+            (mbi.AllocationProtect == PAGE_EXECUTE_READWRITE || mbi.Protect == PAGE_EXECUTE_READWRITE)) {
+
+            LogMessage("Suspicious RWX memory region at: " + std::to_string((uintptr_t)addr));
+            found = true;
         }
         addr += mbi.RegionSize;
     }
 
-    return suspiciousFound;
+    return found;
 }
 
 bool DetectSpeedHack() {
@@ -193,7 +196,7 @@ bool DetectSpeedHack() {
     lastTime = curTime;
 
     if (abs(tickDiff - timeDiff) > 200) {
-        LogMessage("SpeedHack Detected! Tick difference abnormal.");
+        LogMessage("SpeedHack Detected: Tick mismatch.");
         return true;
     }
 
@@ -229,13 +232,13 @@ void AntiCheatLoop() {
         if (DetectSuspiciousMemoryRegions()) suspiciousActivityCount++;
         if (DetectSpeedHack()) suspiciousActivityCount++;
         DetectManualMappedModules();
-
         AdaptiveSleep(suspiciousActivityCount);
     }
 }
 
 extern "C" __declspec(dllexport) void StartAntiCheatMonitoring() {
-    srand((unsigned int)time(NULL));
+    srand(static_cast<unsigned int>(time(NULL)));
+    InitLogFile();
     g_Running.store(true);
     g_MonitorThread = std::thread([]() {
         HideThread();
@@ -248,5 +251,6 @@ extern "C" __declspec(dllexport) void StopAntiCheatMonitoring() {
     if (g_MonitorThread.joinable()) {
         g_MonitorThread.join();
     }
-    LogMessage("AntiCheat Monitoring Stopped. Resources cleaned up.");
+    LogMessage("AntiCheat Monitoring Stopped.");
+    if (logFile.is_open()) logFile.close();
 }
