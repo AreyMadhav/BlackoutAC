@@ -1,0 +1,8 @@
+﻿C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets(531,5): warning MSB8028: The intermediate directory (x64\Debug\) contains files shared from another project (AntiCheatV3_DLL.vcxproj, BlackoutAntiCheatV1_DLL.vcxproj).  This can lead to incorrect clean and rebuild behavior.
+  BlackoutAC.cpp
+C:\Users\minec\source\repos\AntiCheatV3_DLL\AntiCheatV3_DLL\BlackoutAC.cpp(207,43): warning C4311: 'type cast': pointer truncation from 'HMODULE' to 'DWORD'
+C:\Users\minec\source\repos\AntiCheatV3_DLL\AntiCheatV3_DLL\BlackoutAC.cpp(207,43): warning C4302: 'type cast': truncation from 'HMODULE' to 'DWORD'
+C:\Users\minec\source\repos\AntiCheatV3_DLL\AntiCheatV3_DLL\BlackoutAC.cpp(212,31): warning C4311: 'type cast': pointer truncation from 'HMODULE' to 'DWORD'
+C:\Users\minec\source\repos\AntiCheatV3_DLL\AntiCheatV3_DLL\BlackoutAC.cpp(212,31): warning C4302: 'type cast': truncation from 'HMODULE' to 'DWORD'
+     Creating library C:\Users\minec\source\repos\AntiCheatV3_DLL\x64\Debug\BlackoutACv5b.lib and object C:\Users\minec\source\repos\AntiCheatV3_DLL\x64\Debug\BlackoutACv5b.exp
+  AntiCheatV3_DLL.vcxproj -> C:\Users\minec\source\repos\AntiCheatV3_DLL\x64\Debug\BlackoutACv5b.dll
