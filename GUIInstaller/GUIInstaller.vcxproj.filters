@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Users\minec\source\repos\BlackoutAC\GUIInstaller\src\MainInstaller.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="C:\Users\minec\source\repos\BlackoutAC\GUIInstaller\src\MainInstaller.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\minec\source\repos\BlackoutAC\GUIInstaller\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{7D92FA73-DB93-3E39-AFCA-5195A267E226}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{DCEF0D6C-DAB0-3992-907C-0DE7BB6F9DC6}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
