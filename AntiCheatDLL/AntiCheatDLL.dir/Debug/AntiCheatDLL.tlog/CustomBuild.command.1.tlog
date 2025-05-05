@@ -1,0 +1,10 @@
+^C:\USERS\MINEC\SOURCE\REPOS\BLACKOUTAC\ANTICHEATDLL\CMAKELISTS.TXT
+setlocal
+C:\Strawberry\c\bin\cmake.exe -SC:/Users/minec/source/repos/BlackoutAC -BC:/Users/minec/source/repos/BlackoutAC --check-stamp-file C:/Users/minec/source/repos/BlackoutAC/AntiCheatDLL/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

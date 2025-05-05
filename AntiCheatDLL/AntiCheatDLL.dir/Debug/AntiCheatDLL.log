@@ -1,0 +1,8 @@
+﻿  Building Custom Rule C:/Users/minec/source/repos/BlackoutAC/AntiCheatDLL/CMakeLists.txt
+  AntiCheat.cpp
+C:\Users\minec\source\repos\BlackoutAC\AntiCheatDLL\AntiCheat.cpp(217,43): warning C4311: 'type cast': pointer truncation from 'HMODULE' to 'DWORD'
+C:\Users\minec\source\repos\BlackoutAC\AntiCheatDLL\AntiCheat.cpp(217,43): warning C4302: 'type cast': truncation from 'HMODULE' to 'DWORD'
+C:\Users\minec\source\repos\BlackoutAC\AntiCheatDLL\AntiCheat.cpp(222,31): warning C4311: 'type cast': pointer truncation from 'HMODULE' to 'DWORD'
+C:\Users\minec\source\repos\BlackoutAC\AntiCheatDLL\AntiCheat.cpp(222,31): warning C4302: 'type cast': truncation from 'HMODULE' to 'DWORD'
+     Creating library C:/Users/minec/source/repos/BlackoutAC/libs/Debug/AntiCheatDLL.lib and object C:/Users/minec/source/repos/BlackoutAC/libs/Debug/AntiCheatDLL.exp
+  AntiCheatDLL.vcxproj -> C:\Users\minec\source\repos\BlackoutAC\bin\Debug\AntiCheatDLL.dll
