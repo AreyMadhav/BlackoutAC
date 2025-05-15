@@ -16,8 +16,9 @@
 std::atomic<bool> g_Running(true);
 std::thread g_MonitorThread;
 std::mutex cacheMutex;
-std::ofstream logFile;
 
+/*
+std::ofstream logFile;
 // Initialize log file in %LOCALAPPDATA%\BlackoutAC\logs
 void InitLogFile() {
     char localAppData[MAX_PATH];
@@ -36,6 +37,7 @@ void LogMessage(const std::string& message) {
         logFile << "[" << std::time(nullptr) << "] " << message << std::endl;
     }
 }
+*/
 
 FARPROC ResolveAPI(const char* dll, const char* function) {
     HMODULE hMod = LoadLibraryA(dll);
@@ -238,7 +240,7 @@ void AntiCheatLoop() {
 
 extern "C" __declspec(dllexport) void StartAntiCheatMonitoring() {
     srand(static_cast<unsigned int>(time(NULL)));
-    InitLogFile();
+    //InitLogFile();
     g_Running.store(true);
     g_MonitorThread = std::thread([]() {
         HideThread();
